@@ -1,3 +1,6 @@
+mod admin;
+pub use crate::admin::finance;
+
 mod front_of_house {
     pub mod hosting {
         pub fn add_to_waitlist() {}
@@ -34,6 +37,13 @@ mod back_of_house {
     }
 }
 
+use crate::front_of_house::hosting;
+use crate::front_of_house::hosting as local_hosting;
+
+use std::{cmp::Ordering, io};
+
+use std::collection::*;
+
 pub fn eat_at_restaurant() {
     // Absolute Path
     crate::front_of_house::hosting::add_to_waitlist();
@@ -47,4 +57,6 @@ pub fn eat_at_restaurant() {
 
     let order1 = back_of_house::Appetizer::Soup;
     let order2 = back_of_house::Appetizer::Salad;
+
+    hosting::add_to_waitlist();
 }
