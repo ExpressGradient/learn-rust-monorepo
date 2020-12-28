@@ -108,3 +108,39 @@ You should use ranges to create string slices with caution, because doing so can
 ## Methods for Iterating Over Strings
 Use `chars` method if you need to perform operations on individual Unicode Scalar Values and `bytes` method for operations on each raw byte.  
 Getting grapheme clusters from string is complex, use an external crate for that.
+
+# Storing Keys with Associated Values in Hash Maps
+The type `HashMap<K, V>` stores a mapping of keys of type `K` to values of type `V`.  
+This is done using a hashing function which determines how it places these keys and values in memory.  
+Hash Maps are useful when you want to look up data not by using an index, but by using a key that can be of any type.  
+
+## Creating a New Hash Map
+You can create an empty hash map with `new` method and add elements to it using the `insert` method.  
+Hash Map is the least used of the three common collections, so it is not included in the items brought into scope automatically in the prelude.  
+Hash Maps also have less support from the standard library, there's no built-in macro to construct them.  
+Hash Map data is also stored on the heap. Its keys must be of same type and so is its values too.  
+
+## Hash Maps and Ownership
+For types that implement `Copy` trait, values are copied into Hash Map.  
+For owned values like `String`, the values will be moved and Hash Map will be the owner of those values.  
+
+## Accessing Values in a Hash Map
+Use the `get` method to access values from a Hash Map. This method returns an `Option<&V>`. We should be handling the `Option` using either `match` or `if let`.  
+We can even iterate over each key/value pair in a Hash Map using a `for` loop.  
+
+## Updating a Hash Map
+### Overwriting a Value
+Using `insert` method on a key already having a Value overwrites it.  
+
+### Only Inserting a Value If the Key Has No Value
+Hash Map API has a method called `entry` which returns an `Entry` enum, this represents a value that might or might not exist.  
+The `or_insert` method on `Entry` is defined to return a mutable reference to the Value for the corresponding `Entry` key if that key exists, and if not, inserts the parameter as the new value for this key and returns a mutable reference to the new value.  
+
+### Updating a Value Based on the Old Value
+The `entry` method returns a mutable reference `&mut V`.  Use it to update the value.  
+
+## Hashing Functions
+By default `Hash Map` uses a cryptographically strong hashing function that can provide resistance to DoS attacks.  
+This not the fastest algorithm, but the trade-off for better security that comes with the drop in performance is worth it.  
+If you find the default Hash Function is slow, you can switch to another Function by specifying a different Hasher.  
+Implement your own Hasher or lookup crates.io for other Hashers.
