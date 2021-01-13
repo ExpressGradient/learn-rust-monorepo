@@ -41,3 +41,80 @@ This is done by monomorphization of the code using generics at compile time.
 Monomorphization is the process of turning generic code into specific code by filling in the concrete types that are used when compiled.  
 The compiler does the opposite of the steps we used to create the generic function by extracting duplicate code and adding a generic type.  
 Because of this process of monomorphization, we pay no runtime cost for using generics and also it is extremely efficient at runtime.
+
+# Traits: Defining Shared Behavior
+A trait tells the Rust compiler about functionality a particular type has and can share with other types.  
+We can use traits to define shared behavior in an abstract way.  
+We can use trait bounds to specify that a generic type can be of any type that has certain behavior.  
+
+## Defining a Trait
+A type's behavior consists of the methods we can call on that type. Different types share the same behavior if we can call the same methods on all of those types.  
+A trait contains only method signatures instead of complete methods.  
+```rust
+trait TraitName {
+    fn function_name(&self) -> String;
+}
+```
+Each type implementing this trait must provide its own custom behavior for the body of the method.  
+A trait can have multiple methods in its body.  
+
+## Implementing a Trait on a Type
+If we have a type called TypeName, TraitName's implementation for that type would be,
+```rust
+impl TraitName for TypeName {
+    fn function_name(&self) -> String {
+        // method implementation
+    }
+}
+```
+The trait needs to be a public trait for another crate to implement it.  
+We can implement a trait on a type only if either the trait, or the type is local to our crate. We can't implement external traits on external types.  
+This restriction is part of a property of programs called coherence, and more specifically the orphan rule.  
+This rule ensures that other people's code can't break your code and vice versa.  
+Without the rule, two crates could implement the same trait for the same type, and Rust wouldn't know which implementation to use.  
+
+## Default Implementations
+Instead of ending the method signature with `;` you can go on and add implementation to it, which becomes the default behavior of that method.  
+Then as we implement the trait on a particular type, we can keep or override each method's default behavior.  
+Default implementations can call other methods in the same trait, even if those methods don't have a default implementation.
+
+## Traits as Parameters
+We can define functions to accept arguments, which types have certain trait implementations.  
+```rust
+fn function_name(arg: &impl TraitName) {}
+```
+
+## Trait Bound Syntax
+The `impl Trait` syntax works for straightforward cases but is actually syntax sugar for a longer form, which is called a trait bound.  
+```rust
+fn function_name<T: TraitName>(arg: &T) {}
+```
+This longer form is equivalent to the previous section but is more verbose.  
+The trait bound syntax can express more complexity in other cases. For example, we can have two parameters that implement a Trait.
+
+## Specifying Multiple Traits Bounds with the `+` Syntax
+We can also specify more than one trait bound using the `+` syntax.
+```rust
+fn function_name<T: Trait1 + Trait2>(arg: &T) {}
+```
+
+## Clearer Trait Bounds with `where` Clauses
+Using too many trait bounds has its downsides. It makes function signature hard to read.  
+Rust has alternate syntax for specifing the trait bounds inside a `where` clause after the function signature.
+
+## Returning Types that Implement Traits
+We can also use the `impl Trait` syntax in the return position to return a value of some type that implements a trait.  
+The ability to return a type that is only specified by the trait it implements is especially useful in the context of closures and iterators.  
+However, you can only use `impl Trait` if you're returning a single type.
+
+## Using Trait Bounds to Conditionally Implement Methods
+By using a trait bound with an `impl` block that uses generic type parameters, we can implement methods conditionally for types that implement specific traits.  
+We can also conditionally implement a trait for any type that implements another trait. These implementations are called blanket implementations and are extensively used in the standard library.  
+For example,
+```rust
+impl<T: Display> ToString for T {
+    // implementation...
+}
+```
+We can call the `to_string` method defined by the `ToString` trait on any type that implements the `Display` trait.  
+Traits and trait bounds let us write code that uses generic type parameters to reduce duplication but also specify to the compiler that we want the generic type to have particular behavior.
