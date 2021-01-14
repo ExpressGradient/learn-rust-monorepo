@@ -118,3 +118,47 @@ impl<T: Display> ToString for T {
 ```
 We can call the `to_string` method defined by the `ToString` trait on any type that implements the `Display` trait.  
 Traits and trait bounds let us write code that uses generic type parameters to reduce duplication but also specify to the compiler that we want the generic type to have particular behavior.
+
+# Validating References with Lifetimes
+Every reference has a lifetime, which is the scope for which that reference is valid.  Most of the time, lifetimes are implicit and inferred, just like types are inferred.  
+We must annotate lifetimes when the lifetimes of references could be related in a few different ways.  
+Rust requires us to annotate the relationships using generic lifetime parameters to ensure the actual references used at runtime will definitely be valid.  
+
+## Preventing Dangling References with Lifetimes
+The main aim of lifetimes is to prevent dangling references, which cause a program to reference data other than the data it's intended to reference.  
+
+## The Borrow Checker
+The Rust compiler has a borrow checker that compares scopes to determine whether all borrows are valid.
+
+## Generic Lifetimes in Functions
+If we implement the `longest` function, we get an error because Rust can't tell whether the reference being returned refers to `x` or `y`.  
+
+## Lifetime Annotation Syntax
+Lifetime annotations don't change how long any of the references live.  
+Just as functions can accept any type when the signature specifies a generic lifetime parameter, functions can accept references with any lifetime by specifying a generic lifetime parameter.  
+Lifetime annotations describe the relationships of the lifetimes of multiple references to each other without affecting the lifetimes.  
+One lifetime annotation by itself doesn't have much meaning, because the annotations are meant to tell Rust how generic lifetime parameters of multiple references relate to each other.  
+
+## Lifetime Annotation in Function Signatures
+As with generic type parameters, we need to declare generic lifetime parameters inside angle brackets between the function name and the parameter list.  
+The function signature now tells Rust that for some lifetime `'a`, the function takes two parameters, both of which are string slices that live atleast as long as lifetime `'a`.  
+The return slice from the function will also live atleast as long as lifetime `'a` too.  
+
+## Thinking in Terms of Lifetimes
+When returning a reference from a function, the lifetime parameter for the return type needs to match the lifetime parameter for one of the parameters.  
+Lifetime syntax is about connecting the lifetimes of various parameters and return values of functions.  
+Once they're connected, Rust has enough information to allow memory-safe operations and disallow operations that would create dangling pointers or otherwise violate memory safety.
+
+## Lifetime Annotations in Struct Definitions
+It's possible for structs to hold references, but in that case we need to add a lifetime annotation on every reference in the struct's definition.  
+
+## Lifetime Elision
+Lifetime elision rules are a set of particular cases that the compiler will consider, and if your code fits in these cases, you don't need to write the lifetimes explicitly.  
+They are:
+1. Each paramter that is a reference gets its own lifetime parameter.
+2. If there is exactly one input lifetime parameter, that lifetime is assigned to all output lifetime parameters.
+3. If there are multiple input lifetime parameters, but one of them is `&self` or `&mut self`, the lifetime of `self` is assigned to all output parameters.
+
+## The Static Lifetime
+`'static` lifetime for a reference means, it can live for the entire duration of the program.  
+All string literals have static lifetime because the text of the string is stored directly in the program's binary, which is always available.
