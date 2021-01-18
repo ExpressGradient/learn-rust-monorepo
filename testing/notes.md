@@ -39,4 +39,43 @@ If we add `should_panic` attribute to our test function, it passes if the code i
 We can also write tests that use `Result<T, E>` and we can return an `Err` instead of panicking.  
 The test function will now have a return type, and we return `Ok(T)` if the test passes and `Err(E)` if the test fails instead of calling `assert` macros.  
 Writing tests, so they return a `Result<T, E>` enables you the question mark operator in the body of tests, which can be a convenient way to write tests that should fail if any operation within them returns an `Err` variant.  
-You can't use the `should_panic` annotation on tests that use `Result<T, E>`
+You can't use the `should_panic` annotation on tests that use `Result<T, E>`.
+
+# Controlling How Tests Are Run
+Just as `cargo run` compiles your code and then runs the resulting binary, `cargo test` compiles your code in test mode and runs the resulting binary.  
+You can specify command line options to change the default behavior of `cargo test`. Some command line options go to `cargo test` and some go to the resulting binary.  
+
+## Running Tests in Parallel or Consecutively
+When you run multiple tests, by default they run in parallel using threads. Because the tests are running at the same time, make sure your tests don't depend on each other or any other shared state, including a shared environment, such as current working directory or environment variables.  
+You can use the `--test-threads` flag to specify the number of threads to use to test the binary.  
+```bash
+cargo test -- --test-threads=1
+```
+
+## Showing Function Output
+By default, if a test passes, Rust's test library captures anything printed to the standard output. For example, if we call `println!` in a test and the test passes, we won't see the `println!` output in the terminal.  
+If a test fails, we'll see whatever was printed to standard output with the rest of the failure message.  
+Use `--show-output` flag to show the entire output even if the test passes.
+```bash
+cargo test -- --show-output
+```
+
+## Running a Subset of Tests by Name
+You can choose which tests to run by passing `cargo test` the name or names of the tests you want to run as an argument.  
+
+## Running Single Tests
+We can pass the name of any test function to `cargo test` to run that only test.  
+```bash
+cargo test test_name
+```  
+We can't specify the names of multiple tests in this way; only the first value given to `cargo test` will be used.  
+
+## Filtering to Run Multiple Tests
+We can specify part of a test name, and any test whose name matches that value will be run.  
+
+## Ignoring Some Tests Unless Specifically Requested
+You can annotate some tests using the `ignore` attribute to exclude them during `cargo test`.  
+If we want to run only ignored tests, we can use the `--ignored` flag.  
+```bash
+cargo test -- --ignored
+```
