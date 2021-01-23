@@ -79,3 +79,47 @@ If we want to run only ignored tests, we can use the `--ignored` flag.
 ```bash
 cargo test -- --ignored
 ```
+
+# Test Organization
+There are two main categories in testing: unit tests and integration tests.  
+Unit tests are small and more focused, testing one module in isolation at a time, and can test private interfaces.  
+Integration tests are entirely external to your library and use your code in the same way any other external code would, only the public interface and potentially exercising multiple modules per test.  
+
+## Unit Tests
+The purpose of unit tests is to test each unit of code in isolation from the rest of the code to quickly pinpoint where code isn't working as expected.  
+You'll put unit tests in the src directory in each file with the code that they're testing.  
+The convention is to create a module named `tests` in each file to contain the test functions and to annotate the module with `cfg(test)`.
+
+### The Tests Module and `#[cfg(test)]`
+The `#[cfg(test)]` annotation on the *tests* module tells Rust to compile and run the test code only when you run `cargo test`, not when you run `cargo build`.  
+This saves compile time when you only want to build the library and saves space in the resulting compiled artifact because the tests are not included.  
+Because integration tests go in a different directory, they don't need the `#[cfg(test)]` annotation, but in unit tests, the tests go in the same files.  
+The attribute `cfg` stands for configuration and tells Rust that the following item should only be included given a certain configuration option.  
+
+### Testing Private Functions
+Rust's privacy rules do allow you to test private functions.  
+
+## Integration Tests
+In Rust, integration tests are entirely external to your library. They use your library in the same way any other code would, which means they can only call functions that are part of library's public API.  
+Their purpose is to test whether many parts of your library work together correctly. Units of code that work correctly on their own could have problems when integrated, so test coverage of integrated code is important as well.  
+To create integration tests, you need a *tests* directory.  
+
+### The `tests` Directory
+Cargo knows to look for tests in the top level *tests* directory. We can then make as many test files as we want to in this directory, and Cargo will compile each of the files as an individual crate.  
+As each file in *tests* directory is a separate crate, we need to bring our library into each test's crate's scope.  
+We don't need to annotate any code in the test files with `#[cfg(test)]`.  
+The three sections of the output include the unit tests, integration tests and doc tests.  
+One line for each test will be in the output. Adding more test functions to the integration test files add more result lines.  
+We can still run a particular integration test function by specifying the test function's name as an argument to `cargo test`.  
+To run all the tests in a particular integration test file, use the `--test` argument followed by the name of the file.  
+```bash
+cargo test --test file_name
+```
+
+### Submodules in Integration Tests
+If we need some common modules for a setup or cleanup to be shared among test crates in the *tests* directory, we need to create another directory called common and place the common modules in there.  
+This way, Rust doesn't treat common modules as a part of integration tests.  
+
+### Integration Tests for Binary Crates
+We can't create integration tests in the *tests* directory and bring functions defined in the *src/main.rs* file into scope with a `use` statement.  
+Only library crates expose functions that other crates can use; binary crates are meant to be run on their own.
