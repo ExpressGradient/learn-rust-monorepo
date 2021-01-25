@@ -18,4 +18,35 @@ This is done in 3 ways, which directly map to the three ways a function can take
 These are encoded in the three `Fn` traits as follows:  
 * `FnOnce` consumes the variables it captures from its enclosing scope, known as the closure's environment. To consume the captured variables, the closure must take ownership of these variables  and move them into the closure when it is defined. The `Once` means the closure can't take ownership of the same variables more than once.  
 * `FnMut` can change the environment because it mutably borrows values.  
-* `Fn` borrows values from the environment immutably.
+* `Fn` borrows values from the environment immutably.  
+
+# Processing a Series of Items with Iterators
+The iterator pattern allows you to perform some task on a sequence of items in turn. An iterator is responsible for the logic of iterating over each item and determining when the sequence has finished.  
+In Rust, iterators are lazy, meaning they have no effect until you call methods that consume the iterator to use it up. Once we've created an iterator, we can use it in a variety of ways.  
+
+## The `Iterator` Trait and the `next` Method
+All iterators implement a trait named `Iterator` that is defined in the standard library.  
+The `Iterator` trait only requires implementors to define one method: the `next` method, which returns one item of the iterator at a time wrapped in `Some` and, when the iteration is over, returns `None`.  
+The iterator must be mutable to call the `next` method, since calling the method changes the internal state of the iterator.  
+But for a `for` loop, we took the ownership of the iterator and made it mutable behind the scenes.  
+The `iter` method produces immutable references of a vector. If we want to take ownership and return the values, use `into_iter` method.  
+If we want to create mutable reference, we can call `iter_mut` instead of `iter`.  
+
+## Methods that Consume the Iterator
+The `Iterator` trait has a number of different methods with default implementations provided by the standard library.  
+Some of these methods call the `next` method in their definition. Methods that call `next` are called consuming adaptors, because calling them uses up the iterator.  
+
+## Methods that Produce Other Iterators
+Other methods defined on the `Iterator` trait, known as Iterator adaptors, allow you to change iterators into different kinds of iterators.  
+We need to consume the iterators because they are lazy.  
+
+## Using Closures that Capture Their Environment
+Filter Demo
+
+## Zip method
+Use `zip` method to pair an iterator with another.  
+
+# Comparing Performance: Loops vs. Iterators
+Iterators are faster than `for` loops. Iterators, although high level of abstraction, get compiled down to roughly the same code as if you'd written the lower-level code yourself.  
+They are one of the Rust's zero cost abstractions, by which we mean using the abstraction imposes no additional runtime overhead.  
+Unrolling is an optimization that removes the overhead of the loop controlling code and instead generates repetitive code for each iteration of the loop.
