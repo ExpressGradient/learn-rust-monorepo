@@ -37,3 +37,26 @@ Rust can't figure out how much space to allocate for recursively defined types, 
 Because a `Box<T>` is a pointer, Rust always knows how much space a `Box<T>` needs: a pointer's size doesn't change based on the amount of data it's pointing to.  
 Boxes provide only the indirection and heap allocation; they don't have any other special capabilities. They also don't have performance overhead, so they can be useful in cases like the cons list where the indirection is the only feature we need.  
 The `Box<T>` type is a smart pointer because it implements the `Deref` trait, which allows `Box<T>` values to be treated like references. When a `Box<T>` value goes out of scope, the heap data that the box is pointing to is cleaned up as well because of the `Drop` trait implementation.
+
+# Treating Smart Pointers Like Regular References with the `Deref` Trait
+By implementing `Deref` in such a way that a smart pointer can be treated like a regular reference, you can write code that operates on references and use that code with smart pointers too.  
+
+## Following the Pointer to the Value with the Dereference Operator
+A regular reference is a type of pointer, and one way to think of a pointer is an arrow to a value stored somewhere else.  
+For example, if we create a reference to an `i32` value and then use the dereference operator to follow the reference to the data.  
+
+## Using `Box<T>` Like a Reference
+We can dereference a `Box<T>` just like a regular reference.
+
+## Defining Our Own Smart Pointer
+The `Box<T>` type is ultimately defined as a tuple struct with one element. We'll also define a `new` function to match the `new` function defined on `Box<T>`.  
+Our `MyBox<T>` can't be dereferenced because we haven't implemented that ability on our type. To enable dereferencing with the `*` operator, we implement the `Deref` trait.  
+
+## Treating a Type Like a Reference by Implementing the `Deref` Trait
+The `Deref` trait, provided by the standard library, requires us to implement one method named `deref` that borrows `&self` and returns the inner data.  
+The `type Target = T` defines an associated type for the `Deref` trait to use. Associated types are a slightly different way of declaring a generic parameter.  
+The `deref` method gives the compiler the ability to take a value of any type that implements `Deref` and call the `deref` method to get a `&` reference that it knows how to dereference. So, `*y` turns to `*(y.deref())`.  
+
+## Implicit Deref Coercions with Functions and Methods
+Deref coercion is a convenience that Rust performs on arguments to functions and methods. It works only on types that implement the `Deref` trait.  
+Deref coercion converts such a type into a reference to another type. For example, deref coercion can convert `&String` to `&str` because `String` implements the `Deref` trait such that it returns `str`.  
