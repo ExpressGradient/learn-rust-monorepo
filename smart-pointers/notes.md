@@ -60,3 +60,17 @@ The `deref` method gives the compiler the ability to take a value of any type th
 ## Implicit Deref Coercions with Functions and Methods
 Deref coercion is a convenience that Rust performs on arguments to functions and methods. It works only on types that implement the `Deref` trait.  
 Deref coercion converts such a type into a reference to another type. For example, deref coercion can convert `&String` to `&str` because `String` implements the `Deref` trait such that it returns `str`.  
+
+# Running Code on Cleanup with the `Drop` Trait
+The `Drop` trait lets you customize what happens when a value is about to go out of scope.  
+Specify the code to run when a value goes out of scope by implementing the `Drop` trait.  
+The `Drop` trait requires you to implement one method named `drop` that takes a mutable reference to self.  
+The `Drop` trait is included in the prelude, so we don't need to bring it into the scope.  
+Variables are dropped in the reverse order of their creation.  
+
+## Dropping a Value Early with `std::mem::drop`
+It's not straightforward to disable the automatic `drop` functionality. The whole point of `Drop` trait is that it's taken care of automatically.  
+Occasionally, you might want to clean up a value early. One example is when using smart pointers that manage locks: you might want to force the `drop` method that releases the lock so that other code in the same scope can acquire the lock.  
+Rust doesn't let us call `drop` explicitly because Rust would still automatically call `drop` on the value at the end of its scope.  
+So, if we need to force a value to be cleaned up early, we can use the `std::mem::drop` function.  
+The `std::mem::drop` function is different from the `drop` method in the `Drop` trait. We call it by passing the value we want to force to be dropped early as an argument. The function is in the prelude.
