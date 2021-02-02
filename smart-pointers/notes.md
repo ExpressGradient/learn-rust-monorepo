@@ -73,4 +73,20 @@ It's not straightforward to disable the automatic `drop` functionality. The whol
 Occasionally, you might want to clean up a value early. One example is when using smart pointers that manage locks: you might want to force the `drop` method that releases the lock so that other code in the same scope can acquire the lock.  
 Rust doesn't let us call `drop` explicitly because Rust would still automatically call `drop` on the value at the end of its scope.  
 So, if we need to force a value to be cleaned up early, we can use the `std::mem::drop` function.  
-The `std::mem::drop` function is different from the `drop` method in the `Drop` trait. We call it by passing the value we want to force to be dropped early as an argument. The function is in the prelude.
+The `std::mem::drop` function is different from the `drop` method in the `Drop` trait. We call it by passing the value we want to force to be dropped early as an argument. The function is in the prelude.  
+
+# `Rc<T>` the Reference Counted Smart Pointer
+There are cases when a single value might have multiple owners. For example, in graph data structures, multiple edges point to the same node, and that node is conceptually owned by all the edges that point to it.  
+A node shouldn't be cleaned up unless it doesn't have any edges pointing to it.  
+To enable multiple ownership, Rust has a type called `Rc<T>`, which is an abbreviation for reference counting.  
+The `Rc<T>` type keeps track of number of references to a value which determines whether a value is still in use. If there are zero references to a value, the value can be cleaned up without any references becoming invalid.  
+We use the `Rc<T>` type when we want to allocate some data on heap for multiple parts of our program to read, and we can't determine at compile time which part will finish using data last.  
+`Rc<T>` is only for use in single-threaded scenarios.  
+
+## Using `Rc<T>` to Share Data
+`Rc::clone` doesn't make deep copies, it only increments the reference count, which doesn't take much time.  
+
+## Cloning an `Rc<T>` Increases the Reference Count
+By calling the `Rc::strong_count` function, we can get the reference count of a value.  
+The implementation of `Drop` trait decreases the reference count automatically when an `Rc<T>` value goes out of scope.  
+Via immutable references, `Rc<T>` allows you to share data between multiple parts of your program for reading only.
