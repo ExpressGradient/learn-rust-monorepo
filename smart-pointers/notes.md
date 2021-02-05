@@ -90,3 +90,39 @@ We use the `Rc<T>` type when we want to allocate some data on heap for multiple 
 By calling the `Rc::strong_count` function, we can get the reference count of a value.  
 The implementation of `Drop` trait decreases the reference count automatically when an `Rc<T>` value goes out of scope.  
 Via immutable references, `Rc<T>` allows you to share data between multiple parts of your program for reading only.
+
+# `RefCell<T>` and the Interior Mutability Pattern
+Interior mutability is a design pattern in Rust that allows you to mutate data even when there are no Immutable references to that data; normally this action is disallowed by the borrowing rules.  
+To mutate the data, the pattern uses `unsafe` code inside a data structure to bend Rust's usual rules that govern mutation and borrowing.  
+The `unsafe` code involved is then wrapped in a safe API, and the outer type is still immutable.  
+
+## Enforcing Borrowing Rules at Runtime with `RefCell<T>`
+Unlike `Rc<T>`, the `RefCell<T>` type represents single ownership over the data it holds.  
+With references and `Box<T>`, the borrowing rules' invariants are enforced at compile time. With `RefCell<T>`, these invariants are enforced at runtime.  
+If you break these rules, with `RefCell<T>`, your program will panic and exit.  
+The advantage of checking the borrowing rules at runtime instead is that certain memory-safe scenarios are then allowed, whereas they are disallowed by the compile-time checks.  
+The `RefCell<T>` type is useful when you're sure your code follows the borrowing rules, but the compiler is unable to understand and guarantee that.  
+Similar to `Rc<T>`, `RefCell<T>` is only for use in single-threaded scenarios and will give you a compile-time error if you try using it in a multithreaded context.  
+
+## Interior Mutability: A Mutable Borrow to an Immutable Value
+A consequence of borrowing rules is that when you have an immutable value, you can't borrow it mutably.  
+However, there are situations in which it would be useful for a value to mutate itself in its methods but appear immutable to other code.  
+Using `RefCell<T>` is one way to get the ability to have interior mutability.  
+The borrowing rules in the compiler allows this interior mutability, and borrowing rules are checked at runtime instead.  
+If you violate these rules, you'll get a `panic!` instead of a compile-time error.  
+
+## Mock Objects
+Use `RefCell::new` to make an immutable interior mutable. To get a mutable reference, use the `borrow_mut` and `borrow` to get an immutable reference.  
+
+## Keeping Track of Borrows at Runtime with `RefCell<T>`
+The `borrow` method returns the smart pointer type `Ref<T>`, and `borrow_mut` returns the smart pointer type `RefMut<T>`.  
+Both types implement `Deref`, so we can treat them like regular references.  
+The `RefCell<T>`  keeps track of how many `Ref<T>` and `RefMut<T>` smart pointers are currently active.  
+Every time we call `borrow`, the `RefCell<T>` increases its count of how many immutable borrows are active.  
+When a `Ref<T>` value goes out of scope, the count of immutable goes down by a one.  
+`RefCell<T>` lets us have many immutable borrows or one mutable borrow at any point in time.  
+
+## Having Multiple Owners of Mutable Data by Combining `Rc<T>` and `RefCell<T>`
+If you have an `Rc<T>` that holds `RefCell<T>`, you can get a value that can have multiple owners and that you can mutate.  
+The standard library has other types that provide interior mutability, such as `Cell<T>`, which is similar except that instead of giving references to the inner value, the value is copied in and out of `Cell<T>`.  
+There's also `Mutex<T>`, which offers interior mutability that's safe to use across threads.
