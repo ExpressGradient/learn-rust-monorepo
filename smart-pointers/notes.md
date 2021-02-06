@@ -126,3 +126,20 @@ When a `Ref<T>` value goes out of scope, the count of immutable goes down by a o
 If you have an `Rc<T>` that holds `RefCell<T>`, you can get a value that can have multiple owners and that you can mutate.  
 The standard library has other types that provide interior mutability, such as `Cell<T>`, which is similar except that instead of giving references to the inner value, the value is copied in and out of `Cell<T>`.  
 There's also `Mutex<T>`, which offers interior mutability that's safe to use across threads.
+
+# Reference Cycles Can Leak Memory
+Rust's memory safety guarantees make it difficult, but not impossible, to accidentally create memory that is never cleaned up(known as memory leak).  
+Preventing memory leaks entirely is not one of Rust's guarantees, meaning memory leaks are memory safe in Rust.  
+Using `Rc<T>` and `RefCell<T>`, it's possible to create references where items refer to each other in a cycle.  
+This creates memory leaks because the reference count of each item in the cycle will never reach to 0, and the values will never be dropped.  
+A solution for avoiding reference cycles is reorganizing your data structures so that some references express ownership, and some references don't.  
+
+## Preventing Reference cycles: Turning an `Rc<T>` into a `Weak<T>`
+Calling `Rc::clone` increases the `strong_count` of an `Rc<T>` instance, and an `Rc<T>` instance is cleaned up if its `strong_count` is 0.  
+We can also create a weak reference to the `Rc<T>` instance by calling `Rc::downgrade` and passing a reference to the `Rc<T>`.  
+When we call `Rc::downgrade`, we get a smart pointer of type `Weak<T>` and it will increase `weak_count` instead of `strong_count`.  
+The difference is that, `weak_count` doesn't need to be 0 for the `Rc<T>` instance to be cleaned up.  
+Strong references are how you can share ownership of an `Rc<T>` instance. Weak references don't express ownership relationship.  
+They won't cause a reference cycle because any cycle involving some weak references will be broken once the strong reference count of values involved is 0.  
+Because the value that `Weak<T>` references might have been dropped, to do anything with the value that a `Weak<T>` is pointing to, we must make sure the value still exists.  
+We can do this by calling `Rc::upgrade` method on a `Weak<T>` instance, which will return an `Option<Rc<T>>`. You'll get result of `Some` if the `Rc<T>` values has not been dropped yet and a result of `None` if the `Rc<T>` value has been dropped.
