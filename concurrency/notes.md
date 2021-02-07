@@ -27,3 +27,23 @@ If we call `handle.join()` before the main thread, the main thread will wait for
 ## Use `move` Closures with Threads
 The `move` closure is often used alongside `thread::spawn` because it allows you to use data from one thread in another thread.  
 We can use the `move` keyword before the parameter list of a closure to force the closure to take ownership of the values it uses in the environment.
+
+# Using Message Passing to Transfer Data Between Threads
+One popular approach to ensuring safe concurrency is message passing, where threads or actors communicate by sending each other messages containing data.  
+One major tool Rust has for accomplishing message-sending concurrency is the channel. A channel in programming has two halves: a transmitter and a receiver.  
+One part of your code calls methods on the transmitter with the data you want to send, and another part checks the receiving end for arriving messages.  
+A channel is said to be closed if either the transmitter or receiver half is dropped.  
+We create a channel using `mpsc::channel` function; `mpsc` stands for `multiple producer single consumer`.  
+The way Rust's standard library implements channels means a channel can have multiple sending ends that produce values but only one receiving end that consumes those values.  
+The spawned thread needs to own the transmitting end of the channel to be able to send messages through the channel. The transmitting end has a `send` method that takes the value to send.  
+The receiving end of the channel has two useful methods: `recv` and `try_recv`. `recv` will block the main thread's execution and wait until a value is sent down the channel.  
+When the sending end of the channel closes, `recv` will return an error to signal that no more values will be coming.  
+The `try_recv` doesn't block, but it will return a `Result<T, E>` immediately: an `Ok` value holding a message if one is available and an `Err` value if there aren't any messages this time.  
+
+## Channels and Ownership Transference
+The `send` function takes ownership of its parameter, and when the value is moved, the receiver takes ownership of it.  
+This stops us from accidentally using the value again after sending it; the ownership system checks that everything is okay.  
+
+## Creating Multiple Producers
+We can create multiple producers by cloning the transmitting half of the channel.  
+This time, before we create the first spawned thread, we call `clone` on the sending end of the channel. This will give us a new sending handle we can pass to the first spawned thread.
