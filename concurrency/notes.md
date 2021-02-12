@@ -46,4 +46,40 @@ This stops us from accidentally using the value again after sending it; the owne
 
 ## Creating Multiple Producers
 We can create multiple producers by cloning the transmitting half of the channel.  
-This time, before we create the first spawned thread, we call `clone` on the sending end of the channel. This will give us a new sending handle we can pass to the first spawned thread.
+This time, before we create the first spawned thread, we call `clone` on the sending end of the channel. This will give us a new sending handle we can pass to the first spawned thread.  
+
+# Shared-State Concurrency
+Shared memory Concurrency is like multiple ownership: multiple threads can access the same memory location at the same time.  
+
+## Using Mutexes to Allow Access to Data from One Thread at a Time
+Mutex is an abbreviation for mutual exclusion, as in, a mutex allows only one thread to access some data at any given time.  
+To access the data in a mutex, a thread must first signal that it wants access by asking to acquire the mutex's lock.  
+The lock is a data structure that is part of the mutex that keeps track of who currently has exclusive access to the data.  
+You must attempt to acquire the lock before using the data.  
+When you're doing with the data that the mutex guards, you must unlock the data so other threads can acquire the lock.  
+Management of mutexes can be incredibly tricky to get right, which is why so many people are enthusiastic about channels.  
+
+## The API of `Mutex<T>`
+As with many types, we create a `Mutex<T>` using the associated function `new`.  
+To access the data inside the mutex, we use the `lock` method to acquire the lock. This call will block the current thread, so it can't do any work until it's our turn to have the lock.  
+The call to `lock` would fail if another thread holding the lock panicked.  
+After we've acquired the lock, we can treat the return value as mutable reference to the data inside.  
+The call to `lock` returns a smart pointer called `MutexGuard`, wrapped in a `LockResult`.  
+The `MutexGuard` implements `Deref` to point at our inner data; the smart pointer also has a `Drop` implementation that releases the lock automatically when a `MutexGuard` goes out of scope.  
+
+## Sharing a `Mutex<T>` Between Multiple Threads
+`Mutex<T>` cannot be shared in multiple threads in the program because the `Mutex<T>` was moved into the closure.  
+
+## Multiple Ownership with Multiple Threads
+Wrap the `Mutex<T>` inside `Rc<T>` to create multiple owners.  
+Unfortunately, `Rc<T>` is not safe to share across threads.  
+
+## Atomic Reference Counting with `Arc<T>`
+`Arc<T>` is a type like `Rc<T>` that is safe to use in concurrent situations.  
+Atomics work like primitive types but are safe to share across threads.  
+Thread safety comes with a performance penalty that you only want to pay when you really need to.  
+
+## Similarities Between `RefCell<T>`/`Rc<T>` and `Mutex<T>`/`Arc<T>`
+`Mutex<T>` provides interior mutability, as the `Cell` family does.  
+We use `Mutex<T>` to mutate the contents inside an `Arc<T>`.  
+`Mutex<T>` comes with risk of creating deadlocks. These occur when an operation needs to lock two resources and two threads have each acquired one of the locks, causing them to wait for each other forever.
