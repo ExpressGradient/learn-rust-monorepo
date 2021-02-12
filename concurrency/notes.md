@@ -83,3 +83,22 @@ Thread safety comes with a performance penalty that you only want to pay when yo
 `Mutex<T>` provides interior mutability, as the `Cell` family does.  
 We use `Mutex<T>` to mutate the contents inside an `Arc<T>`.  
 `Mutex<T>` comes with risk of creating deadlocks. These occur when an operation needs to lock two resources and two threads have each acquired one of the locks, causing them to wait for each other forever.
+
+# Extensible Concurrency with the `Sync` and `Send` Traits
+The Rust language has very few concurrency features. All the features we learnt are a part of the standard library, not the language.  
+We can write our own concurrency features or use those written by others.  
+Two concurrency concepts embedded in the language: the `std::marker` traits `Sync` and `Send`.
+
+## Allowing Transference of Ownership Between Threads with `Send`
+The `Send` marker trait indicates that ownership of the type implementing `Send` can be transferred between threads.  
+Almost every Rust type is `Send`, but there are some exceptions, including `Rc<T>`.  
+If you cloned and `Rc<T>` value and tried to transfer ownership of the clone to another thread, both threads might update the reference count at the same time.  
+For this reason, `Rc<T>` is implemented for use in single-threaded situations where you don't want to pay the thread-safe performance penalty.  
+Almost all primitive types are `Send`, aside from raw pointers.  
+
+## Allowing Access from Multiple Threads with `Sync`
+The `Sync` marker trait indicates that it is safe for the type implementing `Sync` to be referenced from multiple threads.  
+Similar to `Send`, primitive types are `Sync`, and types composed entirely of types that are `Sync` are also `Sync`.  
+
+## Implementing `Send` and `Sync` Manually is Unsafe
+Manually implementing these traits involves implementing unsafe Rust code.
